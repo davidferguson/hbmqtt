@@ -4,7 +4,7 @@
 
 __all__ = ['get_plugin_manager', 'BaseContext', 'PluginManager']
 
-import pkg_resources
+#import pkg_resources
 import logging
 import asyncio
 import copy
@@ -61,13 +61,16 @@ class PluginManager:
         return self.context
 
     def _load_plugins(self, namespace):
+        return
         self.logger.debug("Loading plugins for namespace %s" % namespace)
         for ep in pkg_resources.iter_entry_points(group=namespace):
             plugin = self._load_plugin(ep)
             self._plugins.append(plugin)
             self.logger.debug(" Plugin %s ready" % plugin.ep.name)
 
-    def _load_plugin(self, ep: pkg_resources.EntryPoint):
+    def _load_plugin(self, ep: 0):
+        return
+        #def _load_plugin(self, ep: pkg_resources.EntryPoint):
         try:
             self.logger.debug(" Loading plugin %s" % ep)
             plugin = ep.load(require=True)
