@@ -506,7 +506,7 @@ class Broker:
                         try:
                             topic = app_message.topic
                             data = str(app_message.data.decode("utf-8"))
-                            self.status_callback("publish", topic=topic, data=data)
+                            self.status_callback("publish", topic=topic, data=data, client_address=client_session.ip)
                         except:
                             pass
                     
@@ -597,7 +597,7 @@ class Broker:
                 del self._retained_messages[topic_name]
 
     def add_subscription(self, subscription, session):
-        if self.report_status: self.status_callback("subscribe", topic=subscription[0])
+        if self.report_status: self.status_callback("subscribe", topic=subscription[0], client_address=session.ip)
         import re
         wildcard_pattern = re.compile('.*?/?\+/?.*?')
         try:
@@ -633,7 +633,7 @@ class Broker:
         :param session:
         :return:
         """
-        if self.report_status: self.status_callback("unsubscribe", topic=a_filter)
+        if self.report_status: self.status_callback("unsubscribe", topic=a_filter, client_address=session.ip)
         deleted = 0
         try:
             subscriptions = self._subscriptions[a_filter]
