@@ -79,6 +79,7 @@ class Server:
 
     @asyncio.coroutine
     def acquire_connection(self):
+        print("ACQUIRE")
         if self.semaphore:
             yield from self.semaphore.acquire()
         self.conn_count += 1
@@ -90,6 +91,7 @@ class Server:
                               (self.listener_name, self.conn_count))
 
     def release_connection(self):
+        print("RELEASE")
         if self.semaphore:
             self.semaphore.release()
         self.conn_count -= 1
@@ -350,9 +352,6 @@ class Broker:
 
         remote_address, remote_port = writer.get_peer_info()
         self.logger.info("Connection from %s:%d on listener '%s'" % (remote_address, remote_port, listener_name))
-        
-        if self.report_status:
-            self.status_callback("clientconnected", client_address=remote_address)
 
         # Wait for first packet and expect a CONNECT
         try:
@@ -369,6 +368,9 @@ class Broker:
             yield from writer.close()
             self.logger.debug("Connection closed")
             return
+        
+        if self.report_status:
+            self.status_callback("clientconnected", client_address=remote_address)
 
         if client_session.clean_session:
             # Delete existing session and create a new one
