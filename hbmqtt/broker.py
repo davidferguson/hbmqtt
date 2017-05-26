@@ -79,7 +79,6 @@ class Server:
 
     @asyncio.coroutine
     def acquire_connection(self):
-        print("ACQUIRE")
         if self.semaphore:
             yield from self.semaphore.acquire()
         self.conn_count += 1
