@@ -91,7 +91,7 @@ class Server:
                               (self.listener_name, self.conn_count))
 
     def release_connection(self):
-        print("RELEASE")
+        if self.report_status: self.status_callback("clientdisconnected")
         if self.semaphore:
             self.semaphore.release()
         self.conn_count -= 1
@@ -496,9 +496,13 @@ class Broker:
                         self.logger.warn("[MQTT-3.3.2-2] - %s invalid TOPIC sent in PUBLISH message, closing connection" % client_session.client_id)
                         break
                     
-                    print("RECEIVED PUBLISH")
-                    print(app_message.topic)
-                    print(str(app_message.data.decode("utf-8")))
+                    if self.report_status:
+                        try:
+                            topic = app_message.topic
+                            data = str(app_message.data.decode("utf-8"))
+                            self.status_callback("publish", topic=topic, data=data)
+                        except:
+                            pass
                     
                     yield from self.plugins_manager.fire_event(EVENT_BROKER_MESSAGE_RECEIVED,
                                                                client_id=client_session.client_id,
@@ -587,10 +591,7 @@ class Broker:
                 del self._retained_messages[topic_name]
 
     def add_subscription(self, subscription, session):
-        print("SUBSCRIPTION")
-        print(subscription)
-        print(session)
-        print("")
+        if self.report_status: self.status_callback("subscribe", topic=subscription[0])
         import re
         wildcard_pattern = re.compile('.*?/?\+/?.*?')
         try:
@@ -626,10 +627,7 @@ class Broker:
         :param session:
         :return:
         """
-        print("DEL SUBSCRIPTION")
-        print(a_filter)
-        print(session)
-        print("")
+        if self.report_status: self.status_callback("unsubscribe", topic=a_filter)
         deleted = 0
         try:
             subscriptions = self._subscriptions[a_filter]
