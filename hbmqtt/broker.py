@@ -381,6 +381,8 @@ class Broker:
             return
         
         if self.report_status: self.status_callback("clientconnected", client_address=remote_address)
+        
+        client_session.ip = remote_address
 
         if client_session.clean_session:
             # Delete existing session and create a new one
