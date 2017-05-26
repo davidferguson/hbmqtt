@@ -284,6 +284,9 @@ class Broker:
 
                     self.logger.info("Listener '%s' bind to %s (max_connections=%d)" %
                                      (listener_name, listener['bind'], max_connections))
+            
+            
+            if self.report_status: self.status_callback("brokerstarted", max_connections=max_connections)
 
             self.transitions.starting_success()
             yield from self.plugins_manager.fire_event(EVENT_BROKER_POST_START)
@@ -329,6 +332,8 @@ class Broker:
         self.logger.info("Broker closed")
         yield from self.plugins_manager.fire_event(EVENT_BROKER_POST_SHUTDOWN)
         self.transitions.stopping_success()
+        
+        if self.report_status: self.status_callback("brokerstopped")
 
     @asyncio.coroutine
     def internal_message_broadcast(self, topic, data, qos=None):
@@ -361,16 +366,17 @@ class Broker:
                              (format_client_message(address=remote_address, port=remote_port), exc))
             #yield from writer.close()
             self.logger.debug("Connection closed")
+            if self.report_status: self.status_callback("connectionattempt", error="invalidCONNECT", msg="Can't read first packet an CONNECT", client_address=remote_address)
             return
         except MQTTException as me:
             self.logger.error('Invalid connection from %s : %s' %
                               (format_client_message(address=remote_address, port=remote_port), me))
+            if self.report_status: self.status_callback("connectionattempt", error="invalidConnection", msg="Invalid Connection", client_address=remote_address)
             yield from writer.close()
             self.logger.debug("Connection closed")
             return
         
-        if self.report_status:
-            self.status_callback("clientconnected", client_address=remote_address)
+        if self.report_status: self.status_callback("clientconnected", client_address=remote_address)
 
         if client_session.clean_session:
             # Delete existing session and create a new one
@@ -505,6 +511,7 @@ class Broker:
         wait_deliver.cancel()
 
         self.logger.debug("%s Client disconnected" % client_session.client_id)
+        if self.report_status: self.status_callback("client_disconnected")
         server.release_connection()
 
 
@@ -575,6 +582,9 @@ class Broker:
                 del self._retained_messages[topic_name]
 
     def add_subscription(self, subscription, session):
+        print("SUBSCRIPTION")
+        print(subscription)
+        print(session)
         import re
         wildcard_pattern = re.compile('.*?/?\+/?.*?')
         try:
@@ -610,6 +620,9 @@ class Broker:
         :param session:
         :return:
         """
+        print("DEL SUBSCRIPTION")
+        print(a_filter)
+        print(session)
         deleted = 0
         try:
             subscriptions = self._subscriptions[a_filter]
@@ -668,6 +681,11 @@ class Broker:
                             if 'qos' in broadcast:
                                 qos = broadcast['qos']
                             if target_session.transitions.state == 'connected':
+                                print("SENDING MESSAGE TO CLIENT")
+                                print(broadcast)
+                                print(format_client_message(session=broadcast['session']))
+                                print(broadcast['topic'])
+                                print(format_client_message(session=target_session))
                                 self.logger.debug("broadcasting application message from %s on topic '%s' to %s" %
                                                   (format_client_message(session=broadcast['session']),
                                                    broadcast['topic'], format_client_message(session=target_session)))
