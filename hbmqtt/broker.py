@@ -61,7 +61,7 @@ class RetainedApplicationMessage:
 
 
 class Server:
-    def __init__(self, listener_name, server_instance, max_connections=-1, loop=None):
+    def __init__(self, listener_name, server_instance, max_connections=-1, loop=None, status_callback=None):
         self.logger = logging.getLogger(__name__)
         self.instance = server_instance
         self.conn_count = 0
@@ -70,6 +70,11 @@ class Server:
             self._loop = loop
         else:
             self._loop = asyncio.get_event_loop()
+        
+        self.report_status = False
+        if status_callback is not None:
+            self.status_callback = status_callback
+            self.report_status = True
 
         self.max_connections = max_connections
         if self.max_connections > 0:
@@ -274,12 +279,12 @@ class Broker:
                                                                    port,
                                                                    ssl=sc,
                                                                    loop=self._loop)
-                        self._servers[listener_name] = Server(listener_name, instance, max_connections, self._loop)
+                        self._servers[listener_name] = Server(listener_name, instance, max_connections, self._loop, self.status_callback)
                     elif listener['type'] == 'ws':
                         cb_partial = partial(self.ws_connected, listener_name=listener_name)
                         instance = yield from websockets.serve(cb_partial, address, port, ssl=sc, loop=self._loop,
                                                                subprotocols=['mqtt'])
-                        self._servers[listener_name] = Server(listener_name, instance, max_connections, self._loop)
+                        self._servers[listener_name] = Server(listener_name, instance, max_connections, self._loop, self.status_callback)
 
                     self.logger.info("Listener '%s' bind to %s (max_connections=%d)" %
                                      (listener_name, listener['bind'], max_connections))
