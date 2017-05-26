@@ -95,7 +95,7 @@ class Server:
                               (self.listener_name, self.conn_count))
 
     def release_connection(self):
-        if self.report_status: self.status_callback("clientdisconnected")
+        #if self.report_status: self.status_callback("clientdisconnected")
         if self.semaphore:
             self.semaphore.release()
         self.conn_count -= 1
@@ -526,7 +526,7 @@ class Broker:
         wait_deliver.cancel()
 
         self.logger.debug("%s Client disconnected" % client_session.client_id)
-        if self.report_status: self.status_callback("client_disconnected")
+        if self.report_status: self.status_callback("clientdisconnected", client_address=client_session.ip)
         server.release_connection()
 
 
