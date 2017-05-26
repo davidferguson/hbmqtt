@@ -498,7 +498,7 @@ class Broker:
                     
                     print("RECEIVED PUBLISH")
                     print(app_message.topic)
-                    print(app_message.data)
+                    print(str(app_message.data))
                     
                     yield from self.plugins_manager.fire_event(EVENT_BROKER_MESSAGE_RECEIVED,
                                                                client_id=client_session.client_id,
