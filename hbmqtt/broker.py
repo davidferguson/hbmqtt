@@ -149,12 +149,17 @@ class Broker:
     """
     states = ['new', 'starting', 'started', 'not_started', 'stopping', 'stopped', 'not_stopped', 'stopped']
 
-    def __init__(self, config=None, loop=None, plugin_namespace=None):
+    def __init__(self, config=None, loop=None, plugin_namespace=None, status_callback=None):
         self.logger = logging.getLogger(__name__)
         self.config = _defaults
         if config is not None:
             self.config.update(config)
         self._build_listeners_config(self.config)
+        
+        self.report_status = False
+        if status_callback is not None:
+            self.status_callback = status_callback
+            self.report_status = True
 
         if loop is not None:
             self._loop = loop
@@ -345,6 +350,9 @@ class Broker:
 
         remote_address, remote_port = writer.get_peer_info()
         self.logger.info("Connection from %s:%d on listener '%s'" % (remote_address, remote_port, listener_name))
+        
+        if self.report_status:
+            self.status_callback("clientconnected", client_address=remote_address)
 
         # Wait for first packet and expect a CONNECT
         try:
