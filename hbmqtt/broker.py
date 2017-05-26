@@ -495,6 +495,11 @@ class Broker:
                     if "#" in app_message.topic or "+" in app_message.topic:
                         self.logger.warn("[MQTT-3.3.2-2] - %s invalid TOPIC sent in PUBLISH message, closing connection" % client_session.client_id)
                         break
+                    
+                    print("RECEIVED PUBLISH")
+                    print(app_message.topic)
+                    print(app_message.data)
+                    
                     yield from self.plugins_manager.fire_event(EVENT_BROKER_MESSAGE_RECEIVED,
                                                                client_id=client_session.client_id,
                                                                message=app_message)
@@ -585,6 +590,7 @@ class Broker:
         print("SUBSCRIPTION")
         print(subscription)
         print(session)
+        print("")
         import re
         wildcard_pattern = re.compile('.*?/?\+/?.*?')
         try:
@@ -623,6 +629,7 @@ class Broker:
         print("DEL SUBSCRIPTION")
         print(a_filter)
         print(session)
+        print("")
         deleted = 0
         try:
             subscriptions = self._subscriptions[a_filter]
@@ -681,11 +688,6 @@ class Broker:
                             if 'qos' in broadcast:
                                 qos = broadcast['qos']
                             if target_session.transitions.state == 'connected':
-                                print("SENDING MESSAGE TO CLIENT")
-                                print(broadcast)
-                                print(format_client_message(session=broadcast['session']))
-                                print(broadcast['topic'])
-                                print(format_client_message(session=target_session))
                                 self.logger.debug("broadcasting application message from %s on topic '%s' to %s" %
                                                   (format_client_message(session=broadcast['session']),
                                                    broadcast['topic'], format_client_message(session=target_session)))
